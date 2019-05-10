@@ -1,5 +1,5 @@
-import {Component, Input, OnInit} from '@angular/core';
-import {Observable} from 'rxjs';
+import {Component, Input, OnDestroy, OnInit} from '@angular/core';
+import {Observable, Subscription} from 'rxjs';
 import {PriceQueryResponse} from "../../../../../../stocks/data-access-price-query/src/lib/+state/price-query.type";
 
 @Component({
@@ -7,9 +7,10 @@ import {PriceQueryResponse} from "../../../../../../stocks/data-access-price-que
   templateUrl: './chart.component.html',
   styleUrls: ['./chart.component.css']
 })
-export class ChartComponent implements OnInit {
+export class ChartComponent implements OnInit, OnDestroy {
   @Input() data$: Observable<PriceQueryResponse[]>;
   private chartData: PriceQueryResponse[];
+  private subscription: Subscription;
 
   private chart: {
     title: string;
@@ -31,6 +32,12 @@ export class ChartComponent implements OnInit {
       options: {title: `Stock price`, width: '600', height: '400'}
     };
 
-    this.data$.subscribe(newData => (this.chartData = newData));
+    this.subscription = this.data$.subscribe(newData => (this.chartData = newData));
+  }
+
+  ngOnDestroy() {
+    if(this.subscription) {
+      this.subscription.unsubscribe()
+    }
   }
 }
