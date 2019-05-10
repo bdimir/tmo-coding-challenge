@@ -1,44 +1,41 @@
-import {Component, Input, OnDestroy, OnInit} from '@angular/core';
-import {Observable, Subscription} from 'rxjs';
-import {PriceQueryResponse} from "../../../../data-access-price-query/src/lib/+state/price-query.type";
-
+import { Component } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { PriceQueryFacade } from '@coding-challenge/stocks/data-access-price-query';
 
 @Component({
-  selector: 'coding-challenge-chart',
-  templateUrl: './chart.component.html',
-  styleUrls: ['./chart.component.css']
+  selector: 'coding-challenge-stocks',
+  templateUrl: './stocks.component.html',
+  styleUrls: ['./stocks.component.css']
 })
-export class ChartComponent implements OnInit, OnDestroy {
-  @Input() data$: Observable<PriceQueryResponse[]>;
-  private chartData: PriceQueryResponse[];
-  private subscription: Subscription;
+export class StocksComponent {
+  stockPickerForm: FormGroup;
+  symbol: string;
+  period: string;
 
-  private chart: {
-    title: string;
-    type: string;
-    data: [];
-    columnNames: string[];
-    options: {};
-  };
+  quotes$ = this.priceQuery.priceQueries$;
 
-  constructor() {
+  timePeriods = [
+    { viewValue: 'All available data', value: 'max' },
+    { viewValue: 'Five years', value: '5y' },
+    { viewValue: 'Two years', value: '2y' },
+    { viewValue: 'One year', value: '1y' },
+    { viewValue: 'Year-to-date', value: 'ytd' },
+    { viewValue: 'Six months', value: '6m' },
+    { viewValue: 'Three months', value: '3m' },
+    { viewValue: 'One month', value: '1m' }
+  ];
+
+  constructor(private fb: FormBuilder, private priceQuery: PriceQueryFacade) {
+    this.stockPickerForm = fb.group({
+      symbol: [null, Validators.required],
+      period: [null, Validators.required]
+    });
   }
 
-  ngOnInit() {
-    this.chart = {
-      title: '',
-      type: 'LineChart',
-      data: [],
-      columnNames: ['period', 'close'],
-      options: {title: `Stock price`, width: '600', height: '400'}
-    };
-
-    this.subscription = this.data$.subscribe(newData => (this.chartData = newData));
-  }
-
-  ngOnDestroy() {
-    if(this.subscription) {
-      this.subscription.unsubscribe()
+  fetchQuote() {
+    if (this.stockPickerForm.valid) {
+      const { symbol, period } = this.stockPickerForm.value;
+      this.priceQuery.fetchQuote(symbol, period);
     }
   }
 }
