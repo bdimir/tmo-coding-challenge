@@ -1,29 +1,27 @@
-import {
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  Input,
-  OnInit
-} from '@angular/core';
-import { Observable } from 'rxjs';
+import {Component, Input, OnDestroy, OnInit} from '@angular/core';
+import {Observable, Subscription} from 'rxjs';
+import {PriceQueryResponse} from "../../../../../../stocks/data-access-price-query/src/lib/+state/price-query.type";
 
 @Component({
   selector: 'coding-challenge-chart',
   templateUrl: './chart.component.html',
   styleUrls: ['./chart.component.css']
 })
-export class ChartComponent implements OnInit {
-  @Input() data$: Observable<any>;
-  chartData: any;
+export class ChartComponent implements OnInit, OnDestroy {
+  @Input() data$: Observable<PriceQueryResponse[]>;
+  private chartData: PriceQueryResponse[];
+  private subscription: Subscription;
 
-  chart: {
+  private chart: {
     title: string;
     type: string;
-    data: any;
+    data: [];
     columnNames: string[];
-    options: any;
+    options: {};
   };
-  constructor(private cd: ChangeDetectorRef) {}
+
+  constructor() {
+  }
 
   ngOnInit() {
     this.chart = {
@@ -31,9 +29,15 @@ export class ChartComponent implements OnInit {
       type: 'LineChart',
       data: [],
       columnNames: ['period', 'close'],
-      options: { title: `Stock price`, width: '600', height: '400' }
+      options: {title: `Stock price`, width: '600', height: '400'}
     };
 
-    this.data$.subscribe(newData => (this.chartData = newData));
+    this.subscription = this.data$.subscribe(newData => (this.chartData = newData));
+  }
+
+  ngOnDestroy() {
+    if(this.subscription) {
+      this.subscription.unsubscribe()
+    }
   }
 }
