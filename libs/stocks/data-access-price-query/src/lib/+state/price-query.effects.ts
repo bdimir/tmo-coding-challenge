@@ -1,20 +1,20 @@
-import { HttpClient } from '@angular/common/http';
-import { Inject, Injectable } from '@angular/core';
+import {HttpClient} from '@angular/common/http';
+import {Inject, Injectable} from '@angular/core';
 import {
   StocksAppConfig,
   StocksAppConfigToken
 } from '@coding-challenge/stocks/data-access-app-config';
-import { Effect } from '@ngrx/effects';
-import { DataPersistence } from '@nrwl/nx';
-import { map } from 'rxjs/operators';
+import {Effect} from '@ngrx/effects';
+import {DataPersistence} from '@nrwl/nx';
+import {map} from 'rxjs/operators';
 import {
-  FetchPriceQuery,
+  FetchPriceQuery, FetchPriceQueryInRange,
   PriceQueryActionTypes,
   PriceQueryFetched,
   PriceQueryFetchError
 } from './price-query.actions';
-import { PriceQueryPartialState } from './price-query.reducer';
-import { PriceQueryResponse } from './price-query.type';
+import {PriceQueryPartialState} from './price-query.reducer';
+import {PriceQueryResponse} from './price-query.type';
 
 @Injectable()
 export class PriceQueryEffects {
@@ -26,7 +26,7 @@ export class PriceQueryEffects {
           .get(
             `${this.env.apiURL}/beta/stock/${action.symbol}/chart/${
               action.period
-            }?token=${this.env.apiKey}`
+              }?token=${this.env.apiKey}`
           )
           .pipe(
             map(resp => new PriceQueryFetched(resp as PriceQueryResponse[]))
@@ -39,9 +39,36 @@ export class PriceQueryEffects {
     }
   );
 
+  @Effect() loadPriceQueryInRange$ = this.dataPersistence.fetch(
+    PriceQueryActionTypes.FetchPriceInRangeQuery,
+    {
+      run: (action: FetchPriceQueryInRange) => {
+        return this.httpClient
+          .get(
+            `${this.env.apiURL}/beta/stock/${action.symbol}/chart/max?token=${this.env.apiKey}`
+          )
+          .pipe(
+            map(resp => {
+              const mappedResp = resp as PriceQueryResponse[];
+              const filtered = mappedResp.filter((item: PriceQueryResponse) => {
+                return new Date(item.date) >= new Date(action.dateFrom) &&
+                  new Date(item.date) <= new Date(action.dateTo);
+              });
+              return new PriceQueryFetched(filtered);
+            })
+          );
+      },
+
+      onError: (action: FetchPriceQueryInRange, error) => {
+        return new PriceQueryFetchError(error);
+      }
+    }
+  );
+
   constructor(
     @Inject(StocksAppConfigToken) private env: StocksAppConfig,
     private httpClient: HttpClient,
     private dataPersistence: DataPersistence<PriceQueryPartialState>
-  ) {}
+  ) {
+  }
 }

@@ -1,5 +1,6 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {Observable} from 'rxjs';
+import {PriceQueryResponse} from "../../../../../../stocks/data-access-price-query/src/lib/+state/price-query.type";
 
 @Component({
   selector: 'coding-challenge-chart',
@@ -7,8 +8,8 @@ import {Observable} from 'rxjs';
   styleUrls: ['./chart.component.css']
 })
 export class ChartComponent implements OnInit {
-  @Input() data$: Observable<Array<Array<string | number>>>;
-  private chartData: Array<Array<string | number>>;
+  @Input() data$: Observable<PriceQueryResponse[]>;
+  private chartData: PriceQueryResponse[];
 
   private chart: {
     title: string;
